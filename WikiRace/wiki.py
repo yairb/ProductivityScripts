@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import httplib2, re, urllib, sys
+import httplib2, re, urllib, sys, time
 from bs4 import BeautifulSoup
 
 checkedUrls = []
@@ -25,7 +25,7 @@ def naiveLookForUrl (original, dest, deep, path):
 			toRet = d
 	return toRet
 def getAnchors (url):
-	print "getAnchors of: 																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																								" + url
+	print "getAnchors of: " + url
 	status, response = http.request(url)
 	soup = BeautifulSoup(response, 'html.parser')
 	return set(soup.find_all('a', href=re.compile(r"^/wiki/.*[^.jpg]$")))
@@ -35,7 +35,7 @@ def betterLookForUrl (curList, dest, deep):
 	while found == False:
 		if (curDeep > MAX_DEEP):
 			return -1
-		print "try deep of " + str(deep) #+ " with path: " + urllib.unquote(str(path)).decode('utf8')
+		print "try deep of " + str(curDeep) #+ " with path: " + urllib.unquote(str(path)).decode('utf8')
 		#checkedUrls.append(original)
 		nextList = []	
 		for address in curList:
@@ -43,13 +43,21 @@ def betterLookForUrl (curList, dest, deep):
 				url = address
 			else:
 				url = address.get('href')
-			if url.startswith(PREFIX) == False:
+			if not url.startswith(PREFIX):
 				url = PREFIX + url
 			if url == dest:
 				found = True
+				print "FOUND!!!"
 				return deep
 			for a in getAnchors(url):
-				nextList.append(a.get('href'))
+				link = a.get('href')
+				if a.parent.get('class') != 'citation web' and a.parent.get('class') != 'citation book' and a.parent.get('class') != 'reference-text' and not 'Category:' in link and not 'Special:' in link and link != '/wiki/Main_Page' and not link in checkedUrls:
+					if PREFIX + link == dest:
+						found = True
+						print "FOUND!!!"
+						return deep
+					nextList.append(link)
+					checkedUrls.append(link)
 		curDeep += 1
 		curList = nextList
 	return -1
@@ -64,5 +72,7 @@ PREFIX = 'https://' + lang + '.wikipedia.org'
 MAX_DEEP = 3
 http = httplib2.Http()
 #num = naiveLookForUrl(str(sys.argv[1]), str(sys.argv[2]), 0, [])
+start = time.time()
 num = betterLookForUrl([str(sys.argv[1])], str(sys.argv[2]), 0)
-print "min: " + str(num)
+end = time.time()
+print "min: " + str(num) + " - run " + int(end - start) + " seconds"
