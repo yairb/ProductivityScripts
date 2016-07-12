@@ -24,8 +24,11 @@ def naiveLookForUrl (original, dest, deep, path):
 		if (d < toRet):
 			toRet = d
 	return toRet
+
 def getAnchors (url):
-	print "getAnchors of: " + url
+	global COUNTER
+	print str(COUNTER) + " getAnchors of: " + url
+	COUNTER += 1
 	status, response = http.request(url)
 	soup = BeautifulSoup(response, 'html.parser')
 	return set(soup.find_all('a', href=re.compile(r"^/wiki/.*[^.jpg]$")))
@@ -34,8 +37,9 @@ def betterLookForUrl (curList, dest, deep):
 	found = False
 	while found == False:
 		if (curDeep > MAX_DEEP):
+			print "MAX deep!!!!"
 			return -1
-		print "try deep of " + str(curDeep) #+ " with path: " + urllib.unquote(str(path)).decode('utf8')
+		print "===========try deep of " + str(curDeep) + "============="#+ " with path: " + urllib.unquote(str(path)).decode('utf8')
 		#checkedUrls.append(original)
 		nextList = []	
 		for address in curList:
@@ -48,14 +52,14 @@ def betterLookForUrl (curList, dest, deep):
 			if url == dest:
 				found = True
 				print "FOUND!!!"
-				return deep
+				return curDeep
 			for a in getAnchors(url):
 				link = a.get('href')
-				if a.parent.get('class') != 'citation web' and a.parent.get('class') != 'citation book' and a.parent.get('class') != 'reference-text' and not 'Category:' in link and not 'Special:' in link and link != '/wiki/Main_Page' and not link in checkedUrls:
+				if a.parent.get('class') != 'citation web' and a.parent.get('class') != 'citation book' and a.parent.get('class') != 'reference-text' and not 'Category:' in link and not 'Special:' in link and not 'Help:' in link and link != '/wiki/Main_Page' and not link in checkedUrls:
 					if PREFIX + link == dest:
 						found = True
 						print "FOUND!!!"
-						return deep
+						return curDeep
 					nextList.append(link)
 					checkedUrls.append(link)
 		curDeep += 1
@@ -69,10 +73,11 @@ if length < 3:
 if length > 3:
 	lang = str(sys.argv[3])
 PREFIX = 'https://' + lang + '.wikipedia.org'	
-MAX_DEEP = 3
+MAX_DEEP = 30
+COUNTER = 0
 http = httplib2.Http()
 #num = naiveLookForUrl(str(sys.argv[1]), str(sys.argv[2]), 0, [])
 start = time.time()
 num = betterLookForUrl([str(sys.argv[1])], str(sys.argv[2]), 0)
 end = time.time()
-print "min: " + str(num) + " - run " + int(end - start) + " seconds"
+print "min: " + str(num) + " - run " + str(end - start) + " seconds"
