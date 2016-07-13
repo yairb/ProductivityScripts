@@ -38,33 +38,31 @@ def betterLookForUrl (curList, dest, deep):
 	while found == False:
 		if (curDeep > MAX_DEEP):
 			print "MAX deep!!!!"
-			return -1
+			return []
 		print "===========try deep of " + str(curDeep) + "============="#+ " with path: " + urllib.unquote(str(path)).decode('utf8')
-		#checkedUrls.append(original)
+		
 		nextList = []	
 		for address in curList:
-			if isinstance(address, basestring):
-				url = address
-			else:
-				url = address.get('href')
+			url = address[-1]
 			if not url.startswith(PREFIX):
 				url = PREFIX + url
 			if url == dest:
 				found = True
 				print "FOUND!!!"
-				return curDeep
+				return address + [link]
 			for a in getAnchors(url):
 				link = a.get('href')
 				if a.parent.get('class') != 'citation web' and a.parent.get('class') != 'citation book' and a.parent.get('class') != 'reference-text' and not 'Category:' in link and not 'Special:' in link and not 'Help:' in link and link != '/wiki/Main_Page' and not link in checkedUrls:
 					if PREFIX + link == dest:
 						found = True
 						print "FOUND!!!"
-						return curDeep
-					nextList.append(link)
+						return address + [link]
+					nextList.append(address + [link])
+					#print "adding to list: " + str(address + [link])
 					checkedUrls.append(link)
 		curDeep += 1
 		curList = nextList
-	return -1
+	return []
 length = len(sys.argv)
 lang = 'en'
 if length < 3:
@@ -78,6 +76,6 @@ COUNTER = 0
 http = httplib2.Http()
 #num = naiveLookForUrl(str(sys.argv[1]), str(sys.argv[2]), 0, [])
 start = time.time()
-num = betterLookForUrl([str(sys.argv[1])], str(sys.argv[2]), 0)
+l = betterLookForUrl([[str(sys.argv[1])]], str(sys.argv[2]), 0)
 end = time.time()
-print "min: " + str(num) + " - run " + str(end - start) + " seconds"
+print "list: " + str(l) + " - run " + str(end - start) + " seconds"
